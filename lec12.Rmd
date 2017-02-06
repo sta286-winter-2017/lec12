@@ -1,0 +1,168 @@
+---
+title: "STA286 Lecture 12"
+author: "Neil Montgomery"
+date: "Last edited: `r format(Sys.time(), '%Y-%m-%d %H:%M')`"
+output: 
+  beamer_presentation:
+    keep_tex: TRUE
+    incremental: TRUE
+    df_print: tibble
+    fig_caption: FALSE
+classoption: aspectratio=169
+header-includes:
+- \renewcommand{\le}{\leqslant}
+- \renewcommand{\ge}{\geqslant}
+- \renewcommand\P[1]{P{\left(#1\right)}}
+- \newcommand\F[1]{F_{\tiny{#1}}}
+- \newcommand\f[1]{f_{\tiny{#1}}}
+- \newcommand\p[1]{p_{\tiny{#1}}}
+- \newcommand\V[1]{\text{Var}\!\left(#1\right)}
+- \newcommand\E[1]{E\!\left(#1\right)}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning=FALSE, message=FALSE)
+options(tibble.width=70)
+```
+
+## variance rules
+
+$$\V{a + bX} = b^2\V{X}$$
+
+\pause
+$$\V{X+Y} = \V{X} + \V{Y} + 2\E{(X-EX)(Y-EY)}$$
+
+\pause $\E{(X-EX)(Y-EY)}$ is called the *covariance* of $X$ and $Y$, or $\text{Cov}(X,Y)$, or $\sigma_{\tiny XY}$
+
+\pause 
+$$\text{Cov}(X,Y) = \E{XY} - \E{X}\E{Y}$$
+
+\pause So, $X \perp Y$ implies $\text{Cov(X,Y)}$, in which case the variance of the sum is the sum of the variances.
+
+## covariance
+
+$\text{Cov}(X,Y)$ is a numerical summary of a certain kind of relationship that might exist between two distributions.
+
+\pause It is a measure of *linear* relationship, in the following sense(s):
+
+1. If:
+  + with high probability, larger values of $X$ and $Y$ happen at the same time, and
+  + with high probability, smaller values of $X$ and $Y$ happen at the same time, then:
+    + with high probability $(X - EX)(Y-EY)$ will be \textbf{positive}.
+
+2. If:
+  + with high probability, larger values of $X$ and smaller values of $Y$ happen at the same time, and
+  + with high probability, smaller values of $X$ and larger values of $Y$ happen at the same time, then:
+    + with high probability $(X - EX)(Y-EY)$ will be \textbf{negative}.
+    
+## correlation coefficient
+
+Covariance is in the unit of the product of the units of $X$ and $Y$, so its magnitude is uninformative.
+
+\pause A scale-free version is called \textit{correlation coefficient} (or just "correlation"):
+$$\rho = \frac{\sigma_{\tiny{XY}}}{\sigma_{\tiny X}\sigma_{\tiny Y}}$$
+
+\pause Positive and negative correlation mean the same as positive and negative covariance; in addition, the correlation of different pairs of distributions can be compared. Also:
+$$-1 \le \rho \le 1$$
+    
+## discrete example - positive correlation close to 1
+
+```{r, results='asis'}
+library(xtable)
+X <- c(-1, 0, 1)
+Y <- c(-1, 0, 1)
+Counts_1 <- c(30, 2, 1, 2, 30, 2, 1, 2, 30)
+xy_1 <- data.frame(expand.grid(x=X, y=Y), Counts=Counts_1,
+                  check.names = FALSE)
+xy_1_joint <- addmargins(prop.table(xtabs(Counts ~ x+y, xy_1)), FUN=list(Marginal=sum), quiet=TRUE)
+
+rho <- function(p_table) {
+  sxy <- p_table[1,1] - p_table[1,3] - p_table[3,1] + p_table[3,3]
+  sx <- sqrt(p_table[4,1] + p_table[4,3])
+  sy <- sqrt(p_table[1,4] + p_table[3,4])
+  return(sxy/(sx*sy))
+}
+
+addtorow <- list()
+addtorow$pos <- list(0, 0)
+addtorow$command <- c("& \\multicolumn{3}{c}{$X$} & \\\\\n",
+"$Y$ & -1 & 0 & 1 & Marginal\\\\\n")
+print(xtable(xy_1_joint), comment=FALSE, add.to.row = addtorow, include.colnames = FALSE,  align="r|rrr|r", hline.after = c(0,3))
+```
+
+\pause $E(X) = E(Y) = 0$, so $\text{Cov}(X,Y) = E(XY)$.
+
+\pause In this case (tedious exercise) $\rho = `r round(rho(xy_1_joint), 3)`$.
+
+\pause The probability is strongly concentrated along the "$X=Y$ diagonal".
+
+## discrete example - negative correlation close to 1
+
+```{r, results='asis'}
+Counts_2 <- c(1, 2, 30, 2, 30, 2, 30, 2, 1)
+xy_2 <- data.frame(expand.grid(x=X, y=Y), Counts=Counts_2,
+                  check.names = FALSE)
+xy_2_joint <- addmargins(prop.table(xtabs(Counts ~ x+y, xy_2)), FUN=list(Marginal=sum), quiet=TRUE)
+print(xtable(xy_2_joint), comment=FALSE, add.to.row = addtorow, include.colnames = FALSE,  align="r|rrr|r", hline.after = c(0,3))
+```
+
+\pause In this case (tedious exercise) $\rho = `r round(rho(xy_2_joint), 3)`$.
+
+\pause The probability is strongly concentrated along the "$X=-Y$ diagonal".
+
+## discrete exmaple - $X\perp Y$
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{rrrrr}
+   & \multicolumn{3}{c}{$X$} & \\
+ $Y$ & -1 & 0 & 1 & Marginal\\
+ \hline
+-1 & `r 0.33*0.33` & `r 0.33*0.34` & `r 0.33*0.33` & 0.33 \\ 
+  0 & `r 0.33*0.34` & `r 0.34*0.34` & `r 0.33*0.34` & 0.34 \\ 
+  1 & `r 0.33*0.33` & `r 0.33*0.34` & `r 0.33*0.33` & 0.33 \\ 
+   \hline
+Marginal & 0.33 & 0.34 & 0.33 & 1.00 \\ 
+  \end{tabular}
+\end{table}
+
+\pause $X$ and $Y$ are indepedent (can be tediously verified.)
+
+\pause Easy to show $E(XY)=0$, so that $\rho=0$.
+
+## discrete example - $\rho=0$ but very much not independent!
+
+```{r, results='asis'}
+Counts_3 <- c(0, 50, 0, 0, 0, 0, 25, 0, 25)
+xy_3 <- data.frame(expand.grid(x=X, y=Y), Counts=Counts_3,
+                  check.names = FALSE)
+xy_3_joint <- addmargins(prop.table(xtabs(Counts ~ x+y, xy_3)), FUN=list(Marginal=sum), quiet=TRUE)
+print(xtable(xy_3_joint), comment=FALSE, add.to.row = addtorow, include.colnames = FALSE,  align="r|rrr|r", hline.after = c(0,3))
+```
+
+\pause $X$ and $Y$ are not independent. 
+
+\pause But $E(XY)=0$, so $\rho = 0$. 
+
+# standard deviation as an absolute property of a distribution
+
+## mean and SD aren't unique, but they do say something
+
+$\E{X}$ and $\E{X^2}$ provide information about $X$ that limit its values and probabilities to some extent. Two examples are *Markov's* and *Chebyshev's* inequalities.
+
+\pause Theorem (Markov): If $X\ge 0$ has expected value $\E{X}$, then:
+$$P(X \ge t) \le \frac{\E{X}}{t}.$$ 
+
+\pause Theorem (Chebyshev):  If $\V{X} = \sigma^2$ and $E(X)=\mu$:
+$$P(|X-\mu| \ge t) \le \frac{\sigma^2}{t^2}$$
+Equivalently:
+$$P(\mu - k\sigma < X < \mu + k\sigma) \ge 1 - \frac{1}{k^2}$$
+
+## example - "uniform on (0,1)"
+
+Suppose $X$ has the density $f(x) = 1$ on $0 < x <1$ and 0 otherwise.
+
+Then $E(X) = \frac{1}{2}$ and $\V{X} = \frac{1}{12}$
+
+Various applications of Markov's and Chebyshev's inequality for this example show how weak they really are --- mainly useful in theory than in practice.
+

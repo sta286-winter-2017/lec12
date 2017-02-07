@@ -37,7 +37,7 @@ $$\V{X+Y} = \V{X} + \V{Y} + 2\E{(X-EX)(Y-EY)}$$
 \pause 
 $$\text{Cov}(X,Y) = \E{XY} - \E{X}\E{Y}$$
 
-\pause So, $X \perp Y$ implies $\text{Cov(X,Y)}$, in which case the variance of the sum is the sum of the variances.
+\pause So, $X \perp Y$ implies $\text{Cov(X,Y)}=0$, in which case the variance of the sum is the sum of the variances.
 
 ## covariance
 
